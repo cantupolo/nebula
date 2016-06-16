@@ -11,9 +11,12 @@
 
 package org.eclipse.nebula.effects.stw;
 
+import org.eclipse.swt.events.PaintEvent;
+import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
+import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Display;
 
 /**
@@ -151,13 +154,13 @@ public abstract class Transition {
      * drawing the effect on the graphics context object <i>gc</i>. The <i>direction</i>
      * parameter determines the direction of the transition in degrees starting from 0
      * as the right direction and increasing in counter clock wise direction.
-     *  
+     * 
      * @param from is the image to start the transition from
      * @param to is the image to end the transition to
-     * @param gc is the GC object to draw the transition on
+     * @param canvas is the canvas object to draw the transition on
      * @param direction determines the direction of the transition in degrees
      */
-    public final void start(final Image from, final Image to, final GC gc, final double direction) {
+    public final void start(final Image from, final Image to, final Canvas canvas, final double direction) {
         
         //_transitionManager.isAnyTransitionInProgress.setValue(true);
         
@@ -169,7 +172,7 @@ public abstract class Transition {
         
         //prepare transition background
         ImageData   fromData    = from.getImageData();
-        Image       xitionBg    = new Image(Display.getCurrent(), fromData.width, fromData.height);
+        final Image       xitionBg    = new Image(Display.getCurrent(), fromData.width, fromData.height);
         GC          xitionBgGC  = new GC(xitionBg);
         
         xitionBgGC.setBackground(_transitionManager.backgroundColor);
@@ -186,14 +189,13 @@ public abstract class Transition {
         
         xitionBgGC.dispose();
         
-        Image xitionImg     = new Image(Display.getCurrent(), fromData.width, fromData.height);
-        GC    xitionImgGC   = new GC(xitionImg);
+        final TransitionPainter transitionPainter
+        	= new TransitionPainter(from, to, direction, xitionBg);        
+        canvas.addPaintListener(transitionPainter);
         
-        
-        xitionImgGC.drawImage(xitionBg, 0, 0);
-        xitionImgGC.drawImage(from, 0, 0);
-        initTransition(from, to, xitionImgGC, direction);
-        gc.drawImage(xitionImg, 0, 0);
+        transitionPainter.setTransition(
+        		TransitionPainter.TRANSITION_INIT);
+        forcePaint(canvas, transitionPainter);
         
         //while(!_transitionManager.isCurrentTransitionCanceled.get()
         //        && _t <= _T) {
@@ -207,20 +209,15 @@ public abstract class Transition {
             //required fps (or less) is satisfied and
             //not more
             if(dt >= _dt) {
-                
                 if(_t <= _T) {
-                    
-                    xitionImgGC.drawImage(xitionBg, 0, 0);
-                    stepTransition(_t, from, to, xitionImgGC, direction);
-                    gc.drawImage(xitionImg, 0, 0);
-                    
+                	transitionPainter.setTransition(
+                			TransitionPainter.TRANSITION_STEP);
+                	forcePaint(canvas, transitionPainter);
+                	
                 } else {
-                    
-                    xitionImgGC.drawImage(xitionBg, 0, 0);
-                    xitionImgGC.drawImage(to, 0, 0);
-                    endTransition(from, to, xitionImgGC, direction);
-                    gc.drawImage(xitionImg, 0, 0);
-                    
+                	transitionPainter.setTransition(
+                			TransitionPainter.TRANSITION_END);
+                	forcePaint(canvas, transitionPainter);
                 }
                 
                 flag = true;
@@ -238,11 +235,11 @@ public abstract class Transition {
         }
         
         xitionBg.dispose();
-        xitionImg.dispose();
-        xitionImgGC.dispose();
+		if (!canvas.isDisposed()) {
+			canvas.removePaintListener(transitionPainter);
+		}
         
         //_transitionManager.isAnyTransitionInProgress.setValue(false);
-        
     }
     
     protected void doEvents() {
@@ -253,4 +250,108 @@ public abstract class Transition {
     protected abstract void stepTransition(long t, final Image from, final Image to, final GC gc, final double direction);
     protected abstract void endTransition(final Image from, final Image to, final GC gc, final double direction);
     
+    /**
+     * Force the paint to be performed in the canvas object.
+     * @param canvas Canvas object where the paint will be performed.
+     * @param p Transition painter that will do the paint.
+     */
+    private void forcePaint(Canvas canvas, TransitionPainter tp) {
+    	tp.setEnabled(true);
+        canvas.redraw();
+        canvas.getDisplay().update();
+        canvas.getDisplay().readAndDispatch();
+        tp.setEnabled(false);
+    }
+    
+    /**
+     * Listener to paint the canvas object, where the transition is visualized.
+     * @author Rodrigo Cantú Polo (cantupolo@yahoo.com.br)
+     */
+    private class TransitionPainter implements PaintListener {
+
+    	/** Initial transition to paint. */
+    	private static final int TRANSITION_INIT = 0;
+    	
+    	/** Step transition to paint. */
+    	private static final int TRANSITION_STEP = 1;
+    	
+    	/** End transition to paint. */
+    	private static final int TRANSITION_END = 2;
+    	
+    	/** Indicate that this object is enabled to paint the canvas. */
+    	private boolean _isEnabled = false;
+    	
+    	/** Transition to paint. */
+    	private int _transition = -1;
+    	
+    	/** From image to paint in the canvas. */
+    	private final Image _from;
+    	
+    	/** To image to paint in the canvas. */
+    	private final Image _to;
+    	
+    	/** Direction of the animation effect. */
+    	private final double _direction;
+    	
+    	/** Initial background of the transition paint. */
+    	private final Image _xitionBg;
+    	
+    	/**
+    	 * Indicate that this object is enabled to paint the canvas.
+    	 * @param enabled Value to apply.
+    	 */
+    	private void setEnabled(boolean enabled) {
+    		_isEnabled = enabled;
+    	}
+    	
+    	/**
+    	 * Sets the transition to paint.
+    	 * @param value Value to apply.
+    	 */
+    	private void setTransition(int value) {
+    		_transition = value;
+    	}
+    	
+    	/**
+    	 * Constructor.
+    	 * @param from From image to paint in the canvas.
+    	 * @param to To image to paint in the canvas.
+    	 * @param direction Direction of the animation effect.
+    	 * @param xitionBg Initial background of the transition paint.
+    	 */
+    	private TransitionPainter(final Image from, final Image to,
+    			final double direction, final Image xitionBg) {
+    		_from = from;
+    		_to = to;
+    		_direction = direction;
+    		_xitionBg = xitionBg;
+    	}
+
+        @Override
+        public void paintControl(PaintEvent e) {
+        	if (_isEnabled) {
+        		switch (_transition) {
+        		case TRANSITION_INIT:
+                    e.gc.drawImage(_xitionBg, 0, 0);
+                    e.gc.drawImage(_from, 0, 0);
+                    initTransition(_from, _to, e.gc, _direction);
+                    break;
+
+        		case TRANSITION_STEP:
+                    e.gc.drawImage(_xitionBg, 0, 0);
+                    stepTransition(_t, _from, _to, e.gc, _direction);
+                    break;
+                
+        		case TRANSITION_END:
+                    e.gc.drawImage(_xitionBg, 0, 0);
+                    e.gc.drawImage(_to, 0, 0);
+                    endTransition(_from, _to, e.gc, _direction);
+                    break;
+
+                default:
+                	break;
+        		}
+        	}
+        }
+    }
 }
