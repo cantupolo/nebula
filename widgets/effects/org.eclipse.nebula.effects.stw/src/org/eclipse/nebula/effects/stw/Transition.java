@@ -85,7 +85,12 @@ public abstract class Transition {
      */
     protected static final boolean IS_MAC_OS = System.getProperty("os.name")
             .toLowerCase().indexOf("mac") >= 0;
-
+    /**
+     * Flag to indicate if this OS is a Linux OS or not.
+     */
+    protected static final boolean IS_LINUX_OS = System.getProperty("os.name")
+            .toLowerCase().indexOf("nux") >= 0;
+            
     protected TransitionManager _transitionManager;
     
     protected long      _fps;   //frames per second
@@ -335,7 +340,7 @@ public abstract class Transition {
          */
         public void paintTransition(int transition) {
             _transition = transition;
-            if (IS_MAC_OS) {
+            if (!IS_LINUX_OS) {
                 if (_transition == TRANSITION_INIT) {
                     _canvas.addPaintListener(this);
                 }
