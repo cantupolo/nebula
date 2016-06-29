@@ -25,9 +25,6 @@ import org.eclipse.swt.graphics.ImageData;
  */
 public class CubicRotationTransition extends Transition {
 
-    private static final boolean IS_MAC_OS = System.getProperty("os.name")
-            .toLowerCase().indexOf("mac") >= 0;
-    
     private int _w, _halfW, _h, _halfH;
     private double _a1, _a2, _x, _y, _x0, _y0, _v0;
     private boolean _flag1;
