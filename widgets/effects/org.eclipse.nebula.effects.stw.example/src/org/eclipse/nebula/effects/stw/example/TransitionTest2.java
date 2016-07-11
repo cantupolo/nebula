@@ -13,8 +13,8 @@ package org.eclipse.nebula.effects.stw.example;
 
 import java.util.Formatter;
 
+import org.eclipse.nebula.effects.stw.ImageTransitionable;
 import org.eclipse.nebula.effects.stw.TransitionManager;
-import org.eclipse.nebula.effects.stw.Transitionable;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
@@ -69,7 +69,7 @@ public class TransitionTest2 extends AbstractSTWDemoFrame {
         fd.right = new FormAttachment(100, -5);
         btn.setLayoutData(fd);
         
-        _tm = new TransitionManager(new Transitionable() {
+        _tm = new TransitionManager(new ImageTransitionable() {
             public void setSelection(int index) {
                 me.curImg = index;
             }
@@ -98,6 +98,19 @@ public class TransitionTest2 extends AbstractSTWDemoFrame {
                         transitionableListener.widgetSelected(e);
                     }
                 });
+            }
+        
+            public Image getControlImage(int index) {
+                // Linux has problems to get the canvas image using
+                // <code>org.eclipse.swt.widgets.Control.print(GC)</code>,
+                // so we return the image directly from this
+                // image transitionable object.
+                if (System.getProperty("os.name")
+                        .toLowerCase().indexOf("nux") >= 0) {
+                    return me.imgs[index];
+                } else {
+                    return null;
+                }
             }
         });
         
