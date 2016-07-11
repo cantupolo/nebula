@@ -85,7 +85,12 @@ public abstract class Transition {
      */
     protected static final boolean IS_MAC_OS = System.getProperty("os.name")
             .toLowerCase().indexOf("mac") >= 0;
-
+    /**
+     * Flag to indicate if this OS is a Linux OS or not.
+     */
+    protected static final boolean IS_LINUX_OS = System.getProperty("os.name")
+            .toLowerCase().indexOf("nux") >= 0;
+            
     protected TransitionManager _transitionManager;
     
     protected long      _fps;   //frames per second
@@ -304,6 +309,7 @@ public abstract class Transition {
         private TransitionPainter(Canvas canvas, final Image from, final Image to,
                 final double direction, final Image xitionBg) {
             _canvas = canvas;
+            _gc = new GC(canvas);
             _from = from;
             _to = to;
             _direction = direction;
@@ -334,7 +340,7 @@ public abstract class Transition {
          */
         public void paintTransition(int transition) {
             _transition = transition;
-            if (IS_MAC_OS) {
+            if (!IS_LINUX_OS) {
                 if (_transition == TRANSITION_INIT) {
                     _canvas.addPaintListener(this);
                 }
@@ -350,13 +356,11 @@ public abstract class Transition {
             } else {
                 if (_transition == TRANSITION_INIT) {
                     initXitionImg(_canvas.getDisplay());
-                    _gc = new GC(_canvas);
                 }
                 paintTransition(_xitionImgGC, _transition);
                 _gc.drawImage(_xitionImg, 0, 0);
                 if (_transition == TRANSITION_END) {
                     disposeXitionImg();
-                    _gc.dispose();
                 }
             }
         }
