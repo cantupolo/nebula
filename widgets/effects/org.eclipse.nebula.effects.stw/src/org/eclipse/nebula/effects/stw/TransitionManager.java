@@ -169,17 +169,39 @@ public class TransitionManager {
             
             //capture an image of the "from" view
             Control from    = _transitionable.getControl(fromIndex);
-            Rectangle size  = from.getBounds();
-            Image imgFrom   = new Image(from.getDisplay(), size.width, size.height);
-            GC gcfrom       = new GC(from);
-            from.update();
-            gcfrom.copyArea(imgFrom, 0, 0);
+            Rectangle fromSize  = from.getBounds();
+            Image imgFrom   = new Image(from.getDisplay(), fromSize.width, fromSize.height);
+            GC gcfrom       = null;
+            if (hasImageToGetFromControl(_transitionable, fromIndex)) {
+                Image ctrlImgFrom = ((ImageTransitionable) _transitionable).getControlImage(fromIndex);
+                gcfrom = new GC(imgFrom);
+                Rectangle imgSize = ctrlImgFrom.getBounds();
+                gcfrom.drawImage(ctrlImgFrom, 0, 0, imgSize.width, imgSize.height,
+                    0, 0, fromSize.width, fromSize.height);
+            
+            } else {
+                gcfrom = new GC(from);
+	            from.update();
+	            gcfrom.copyArea(imgFrom, 0, 0);
+            }
             gcfrom.dispose();
             
             //capture an image of the "to" view
             Control to  = _transitionable.getControl(toIndex);
             _transitionable.setSelection(toIndex);
-            Image imgTo = ImageCapture.getImage(to, size.width, size.height, true);
+            Image imgTo = null;
+            Rectangle toSize = to.getBounds();
+            if (hasImageToGetFromControl(_transitionable, toIndex)) {
+                Image ctrlImgTo   = ((ImageTransitionable) _transitionable).getControlImage(toIndex);
+                imgTo   = new Image(to.getDisplay(), toSize.width, toSize.height);
+                GC gcto       = new GC(imgTo);
+                Rectangle imgSize = ctrlImgTo.getBounds();
+                gcto.drawImage(ctrlImgTo, 0, 0, imgSize.width, imgSize.height,
+                    0, 0, toSize.width, toSize.height);
+                gcto.dispose();
+            } else {
+                imgTo = ImageCapture.getImage(to, toSize.width, toSize.height, true);
+            }
             _transitionable.setSelection(fromIndex);
             
             
@@ -298,6 +320,27 @@ public class TransitionManager {
 //        } catch(Exception e) { e.printStackTrace(); }
         
         
+    }
+
+    /**
+     * Verifies if the transitionable object is a
+     * {@link ImageTransitionable} instance and if it has an image 
+     * object to return.
+     * @param transitionable Transitionable object to verify.
+     * @param ctrlIndex Control's index related to the image to verify.
+     * @return if the transitionable object has an image to the
+     * control (true) or not (false).
+     */
+    private boolean hasImageToGetFromControl(
+            Transitionable transitionable, int ctrlIndex) {
+    	if (transitionable instanceof ImageTransitionable) {
+            Image img = ((ImageTransitionable) transitionable)
+                .getControlImage(ctrlIndex);
+        	if (img != null) {
+                return true;
+            }
+        }
+        return false;
     }
     
     /**
