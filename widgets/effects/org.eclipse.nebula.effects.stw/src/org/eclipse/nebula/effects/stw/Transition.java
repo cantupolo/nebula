@@ -304,7 +304,6 @@ public abstract class Transition {
         private TransitionPainter(Canvas canvas, final Image from, final Image to,
                 final double direction, final Image xitionBg) {
             _canvas = canvas;
-            _gc = new GC(canvas);
             _from = from;
             _to = to;
             _direction = direction;
@@ -351,11 +350,13 @@ public abstract class Transition {
             } else {
                 if (_transition == TRANSITION_INIT) {
                     initXitionImg(_canvas.getDisplay());
+                    _gc = new GC(_canvas);
                 }
                 paintTransition(_xitionImgGC, _transition);
                 _gc.drawImage(_xitionImg, 0, 0);
                 if (_transition == TRANSITION_END) {
                     disposeXitionImg();
+                    _gc.dispose();
                 }
             }
         }
