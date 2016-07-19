@@ -171,18 +171,11 @@ public class TransitionManager {
             Control from    = _transitionable.getControl(fromIndex);
             Rectangle fromSize  = from.getBounds();
             Image imgFrom   = new Image(from.getDisplay(), fromSize.width, fromSize.height);
-            GC gcfrom       = null;
-            if (hasImageToGetFromControl(_transitionable, fromIndex)) {
-                Image ctrlImgFrom = ((ImageTransitionable) _transitionable).getControlImage(fromIndex);
-                gcfrom = new GC(imgFrom);
-                Rectangle imgSize = ctrlImgFrom.getBounds();
-                gcfrom.drawImage(ctrlImgFrom, 0, 0, imgSize.width, imgSize.height,
-                    0, 0, fromSize.width, fromSize.height);
-            
-            } else {
-                gcfrom = new GC(from);
-	            from.update();
-	            gcfrom.copyArea(imgFrom, 0, 0);
+            GC gcfrom = new GC(from);
+            from.update();
+            gcfrom.copyArea(imgFrom, 0, 0);
+            if (_transitionable instanceof ImageTransitionable) {
+                ((ImageTransitionable) _transitionable).updateControlImage(imgFrom, fromIndex);
             }
             gcfrom.dispose();
             
@@ -331,10 +324,10 @@ public class TransitionManager {
      */
     private boolean hasImageToGetFromControl(
             Transitionable transitionable, int ctrlIndex) {
-    	if (transitionable instanceof ImageTransitionable) {
+        if (transitionable instanceof ImageTransitionable) {
             Image img = ((ImageTransitionable) transitionable)
                 .getControlImage(ctrlIndex);
-        	if (img != null) {
+            if (img != null) {
                 return true;
             }
         }
