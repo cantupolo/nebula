@@ -101,17 +101,19 @@ public class TransitionTest2 extends AbstractSTWDemoFrame {
             }
         
             public Image getControlImage(int index) {
-                // Linux has problems to get the canvas image using
+                // Linux has problems to get the control image using
                 // <code>org.eclipse.swt.widgets.Control.print(GC)</code>,
                 // so we return the image directly from this
                 // image transitionable object.
-                if (System.getProperty("os.name")
-                        .toLowerCase().indexOf("nux") >= 0) {
+                if (IS_LINUX_OS) {
                     return me.imgs[index];
                 } else {
                     return null;
                 }
             }
+            
+            public void updateControlImage(Image image, int index) { }
+            
         });
         
         cnvs.addPaintListener(new PaintListener() {
@@ -132,5 +134,8 @@ public class TransitionTest2 extends AbstractSTWDemoFrame {
         });
         
     }
+
+    @Override
+    protected void initImages() { }
 
 }

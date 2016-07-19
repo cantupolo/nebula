@@ -15,5 +15,12 @@ public interface ImageTransitionable extends Transitionable {
      * @return the {@link Image} object at the specified index
      */
     public Image getControlImage(int index);
+    /**
+     * updates the {@link Image} object at index <i>index</i>
+     * 
+     * @param image the {@link Image} object value to apply.
+     * @param index the index of the {@link Image} object to update
+     */
+    public void updateControlImage(Image image, int index);
 
 }

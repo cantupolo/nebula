@@ -42,6 +42,9 @@ public abstract class AbstractSTWDemoFrame {
     public static final int TRANSITION_SLIDE          = 1;
     public static final int TRANSITION_CUBIC_ROTATION = 2;
     
+    protected static final boolean IS_LINUX_OS = System.getProperty("os.name")
+            .toLowerCase().indexOf("nux") >= 0;
+    
     private Transition[] _transitions;
     
     public void init(Composite parent) {
@@ -62,6 +65,8 @@ public abstract class AbstractSTWDemoFrame {
     }
     
     protected abstract void init();
+    
+    protected abstract void initImages();
     
     public Composite getContainerComposiste() {
         return _containerComposite;
